@@ -95,7 +95,6 @@ if uploaded_files:
                 with tab_stats:
                     # Calculate sizes
                     original_size = uploaded_file.size
-                    # len() gives characters; encode to utf-8 to get actual byte size
                     converted_size = len(converted_text.encode('utf-8'))
                     
                     # Avoid division by zero
@@ -115,5 +114,42 @@ if uploaded_files:
                     st.table(df)
 
                     # Display Percentage Message
+                    # Logic split to ensure clean f-strings
                     if reduction > 0:
-                        st.success(f"**Optimization:** Text version is **{reduction:.1f}%
+                        st.success(f"**Optimization:** Text version is **{reduction:.1f}% smaller** than the original.")
+                    elif reduction < 0:
+                         st.info(f"**Note:** Text version is **{abs(reduction):.1f}% larger** (common for very small files).")
+                    else:
+                        st.info("File sizes are identical.")
+
+                # 4. Download Options (Shared below tabs)
+                base_name = os.path.splitext(uploaded_file.name)[0]
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    st.download_button(
+                        label="⬇️ Download as Markdown",
+                        data=converted_text,
+                        file_name=f"{base_name}_converted.md",
+                        mime="text/markdown",
+                        key=f"dl_md_{uploaded_file.name}"
+                    )
+
+                with col2:
+                    st.download_button(
+                        label="⬇️ Download as Text",
+                        data=converted_text,
+                        file_name=f"{base_name}_converted.txt",
+                        mime="text/plain",
+                        key=f"dl_txt_{uploaded_file.name}"
+                    )
+
+            except Exception as e:
+                st.error(f"⚠️ Could not read {uploaded_file.name}. Please check the format.")
+                print(f"Error converting {uploaded_file.name}: {e}")
+
+            finally:
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+        
+        st.divider()
